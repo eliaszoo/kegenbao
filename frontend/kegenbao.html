@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>客跟宝 · 销售跟进助手</title>
+<style>
+  :root {
+    --bg: #f4f6fa;
+    --card: #ffffff;
+    --dark: #1a2236;
+    --mid: #3d5068;
+    --muted: #8a9bb0;
+    --border: #e8edf5;
+    --hot: #e85555;
+    --warm: #f0943a;
+    --cold: #7b9ab8;
+    --hot-bg: #fff1f1;
+    --warm-bg: #fff8f0;
+    --cold-bg: #f0f5fa;
+    --accent: #2563eb;
+    --accent-bg: #eff4ff;
+    --radius: 14px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif; color: var(--dark); overflow-x: hidden; }
+
+  /* ── Pages ── */
+  .page { display: none; min-height: 100vh; flex-direction: column; animation: fadeIn 0.2s ease; }
+  .page.active { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── Header ── */
+  .header {
+    background: var(--card); padding: 14px 18px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-row { display: flex; align-items: center; justify-content: space-between; }
+  .header-title { font-size: 20px; font-weight: 800; color: var(--dark); letter-spacing: -0.3px; }
+  .header-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .btn-back {
+    display: flex; align-items: center; gap: 4px;
+    background: none; border: none; color: var(--muted);
+    font-size: 14px; cursor: pointer; padding: 4px 0;
+  }
+  .btn-back svg { flex-shrink: 0; }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    background: var(--dark); color: #fff; border: none;
+    padding: 13px 18px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    width: 100%; transition: opacity 0.15s;
+  }
+  .btn-primary:active { opacity: 0.8; }
+  .btn-primary:disabled { background: var(--border); color: var(--muted); cursor: default; }
+  .btn-ghost {
+    background: none; border: 1.5px solid var(--border); color: var(--muted);
+    padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    width: 100%; cursor: pointer; transition: border-color 0.15s;
+  }
+  .btn-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--bg); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: var(--mid);
+    flex-shrink: 0;
+  }
+
+  /* ── Cards ── */
+  .card { background: var(--card); border-radius: var(--radius); border: 1.5px solid var(--border); }
+  .section { padding: 16px 18px; }
+  .section + .section { border-top: 1px solid var(--border); }
+  .label { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.8px; margin-bottom: 8px; text-transform: uppercase; }
+
+  /* ── Temp Badge ── */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .badge-hot { background: var(--hot-bg); color: var(--hot); border: 1px solid #fca5a530; }
+  .badge-warm { background: var(--warm-bg); color: var(--warm); border: 1px solid #fcd34d30; }
+  .badge-cold { background: var(--cold-bg); color: var(--cold); border: 1px solid #93c5fd30; }
+  .badge-winrate { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d030; font-size:11px; }
+
+  /* ── Temp selector ── */
+  .temp-row { display: flex; gap: 8px; }
+  .temp-btn {
+    flex: 1; padding: 10px; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--card);
+    color: var(--muted); transition: all 0.15s;
+  }
+  .temp-btn.active-hot { border-color: var(--hot); background: var(--hot-bg); color: var(--hot); }
+  .temp-btn.active-warm { border-color: var(--warm); background: var(--warm-bg); color: var(--warm); }
+  .temp-btn.active-cold { border-color: var(--cold); background: var(--cold-bg); color: var(--cold); }
+
+  /* ── Input / Textarea ── */
+  .input, .textarea {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 14px; color: var(--dark);
+    background: var(--bg); outline: none; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .input:focus, .textarea:focus { border-color: var(--accent); background: #fff; }
+  .textarea { resize: none; min-height: 80px; line-height: 1.6; }
+
+  /* ── Customer List ── */
+  .customer-card {
+    background: var(--card); border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    padding: 14px 15px; cursor: pointer;
+    transition: box-shadow 0.15s, transform 0.15s;
+    position: relative; overflow: hidden;
+  }
+  .customer-card:active { transform: scale(0.985); }
+  .customer-card.urgent { border-color: #fbbf24; }
+  .urgent-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg,#fbbf24,#f59e0b); }
+  .avatar {
+    width: 40px; height: 40px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 800; flex-shrink: 0;
+  }
+  .card-row { display: flex; align-items: center; gap: 10px; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-size: 15px; font-weight: 700; color: var(--dark); }
+  .card-industry { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+  .card-note { font-size: 12px; color: #64748b; margin-top: 9px; line-height: 1.5; display: flex; gap: 5px; }
+
+  /* ── Filter tabs ── */
+  .filter-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .filter-tabs::-webkit-scrollbar { display: none; }
+  .filter-tab {
+    padding: 5px 13px; border-radius: 20px; white-space: nowrap;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    border: 1.5px solid var(--border); background: var(--card); color: var(--muted);
+    transition: all 0.15s;
+  }
+  .filter-tab.active-all { border-color: var(--dark); background: var(--dark); color: #fff; }
+  .filter-tab.active-热 { border-color: var(--hot); background: var(--hot-bg); color: var(--hot); }
+  .filter-tab.active-温 { border-color: var(--warm); background: var(--warm-bg); color: var(--warm); }
+  .filter-tab.active-冷 { border-color: var(--cold); background: var(--cold-bg); color: var(--cold); }
+
+  /* ── Urgent banner ── */
+  .urgent-banner {
+    margin: 12px 18px 0; background: #fffbeb; border-radius: 12px;
+    padding: 11px 14px; border: 1.5px solid #fbbf24;
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+  }
+
+  /* ── Scroll body ── */
+  .scroll-body { flex: 1; overflow-y: auto; padding: 12px 18px; padding-bottom: calc(20px + var(--safe-bottom)); }
+
+  /* ── AI Briefing ── */
+  .briefing-page { background: #0f172a; min-height: 100vh; }
+  .briefing-header { padding: 20px 18px 10px; display: flex; align-items: center; gap: 12px; }
+  .briefing-title { font-size: 19px; font-weight: 800; color: #f8fafc; }
+  .briefing-date { font-size: 12px; color: #475569; margin-top: 2px; }
+  .brief-card {
+    margin: 0 18px 12px; border-radius: 16px; padding: 18px;
+    border: 1.5px solid #334155; background: #1e293b;
+    position: relative; overflow: hidden;
+  }
+  .brief-card.top { border-color: #3b82f6; background: linear-gradient(135deg,#1e3a5f 0%,#1e293b 100%); }
+  .brief-tag {
+    position: absolute; top: 12px; right: 12px;
+    background: #3b82f6; color: #fff; border-radius: 20px;
+    padding: 3px 10px; font-size: 11px; font-weight: 700;
+  }
+  .brief-avatar {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: #334155; display: flex; align-items: center;
+    justify-content: center; font-size: 18px; font-weight: 800; color: #94a3b8;
+    flex-shrink: 0;
+  }
+  .brief-name { font-size: 16px; font-weight: 800; color: #f1f5f9; }
+  .brief-reason { font-size: 12px; color: #64748b; margin-top: 3px; line-height: 1.5; }
+  .brief-opener { background: #0f172a; border-radius: 10px; padding: 12px 14px; margin-top: 12px; }
+  .brief-opener-label { font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 0.8px; margin-bottom: 5px; }
+  .brief-opener-text { font-size: 13px; color: #94a3b8; line-height: 1.7; }
+  .loading-state { text-align: center; padding: 70px 20px; }
+  .loading-emoji { font-size: 36px; margin-bottom: 14px; }
+  .loading-text { color: #475569; font-size: 14px; line-height: 1.7; }
+
+  /* ── AI Suggestion box ── */
+  .ai-box { background: var(--bg); border-radius: 12px; padding: 14px; border: 1.5px solid var(--border); }
+  .ai-box-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 0.8px; margin-bottom: 8px; }
+  .ai-box-text { font-size: 13px; color: var(--mid); line-height: 1.8; white-space: pre-wrap; }
+
+  /* ── Record item ── */
+  .record-item { padding: 11px 0; border-bottom: 1px solid var(--bg); }
+  .record-item:last-child { border-bottom: none; }
+  .record-date { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .record-note { font-size: 13px; color: var(--mid); line-height: 1.6; }
+
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: calc(30px + var(--safe-bottom)); left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a2236dd; color: #fff; border-radius: 24px;
+    padding: 10px 22px; font-size: 13px; font-weight: 600;
+    backdrop-filter: blur(10px); pointer-events: none;
+    opacity: 0; transition: all 0.3s; z-index: 999; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── Search ── */
+  .search-wrap { position: relative; margin: 12px 0 10px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search-input {
+    width: 100%; padding: 9px 13px 9px 36px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 13px; color: var(--dark);
+    background: var(--bg); outline: none; font-family: inherit;
+  }
+  .search-input:focus { border-color: var(--accent); background: #fff; }
+
+  /* ── Settings ── */
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--bg); }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 14px; color: var(--dark); font-weight: 500; }
+  .settings-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .key-input { flex: 1; margin-left: 12px; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--dark); background: var(--bg); outline: none; font-family: monospace; }
+
+  /* ── Day count ── */
+  .days-chip { display: flex; align-items: center; gap: 3px; font-size: 11px; }
+  .days-chip svg { flex-shrink: 0; }
+
+  /* Gap helpers */
+  .gap-4 { gap: 4px; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .mt-8 { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-14 { margin-top: 14px; }
+  .mt-16 { margin-top: 16px; }
+  .flex { display: flex; }
+  .col { flex-direction: column; }
+  .center { align-items: center; }
+  .between { justify-content: space-between; }
+  .flex-1 { flex: 1; }
+
+  /* ── Auth pages ── */
+  .auth-page { background: var(--card); padding: 30px 24px; justify-content: center; }
+  .auth-logo { font-size: 32px; margin-bottom: 8px; }
+  .auth-title { font-size: 24px; font-weight: 800; color: var(--dark); text-align: center; }
+  .auth-sub { font-size: 14px; color: var(--muted); text-align: center; margin-top: 8px; margin-bottom: 30px; }
+  .auth-input { margin-bottom: 16px; }
+  .auth-input .input { background: var(--card); }
+  .auth-link { text-align: center; margin-top: 20px; font-size: 14px; color: var(--muted); }
+  .auth-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  /* Header user info */
+  .user-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--dark); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ PAGE: LOGIN ═══════════════ -->
+<div class="page active" id="page-login">
+  <div class="auth-page">
+    <div class="auth-logo">📋</div>
+    <div class="auth-title">客跟宝</div>
+    <div class="auth-sub">销售跟进提醒工具</div>
+
+    <div class="auth-input">
+      <input class="input" id="login-phone" placeholder="手机号" type="tel">
+    </div>
+    <div class="auth-input">
+      <input class="input" id="login-password" placeholder="密码" type="password">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">登录</button>
+
+    <div style="margin-top:20px;text-align:center;">
+      <button class="btn-wechat" onclick="wechatLogin()" style="background:#07c160;color:#fff;border:none;padding:12px;border-radius:12px;font-size:14px;font-weight:700;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.046c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.269-.03-.406-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/></svg>
+        微信一键登录
+      </button>
+    </div>
+
+    <div class="auth-link">
+      还没有账号？<a href="#" onclick="showPage('page-register');return false;">立即注册</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: REGISTER ═══════════════ -->
+<div class="page" id="page-register">
+  <div class="auth-page">
+    <div class="auth-logo">📋</div>
+    <div class="auth-title">注册</div>
+    <div class="auth-sub">创建您的账号</div>
+
+    <div class="auth-input">
+      <input class="input" id="reg-phone" placeholder="手机号" type="tel">
+    </div>
+    <div class="auth-input">
+      <input class="input" id="reg-password" placeholder="密码" type="password">
+    </div>
+    <div class="auth-input">
+      <input class="input" id="reg-nickname" placeholder="昵称（可选）">
+    </div>
+    <button class="btn-primary" onclick="doRegister()">注册</button>
+
+    <div class="auth-link">
+      已有账号？<a href="#" onclick="showPage('page-login');return false;">立即登录</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: LIST ═══════════════ -->
+<div class="page" id="page-list">
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="header-title">客跟宝</div>
+        <div class="header-sub" id="list-subtitle">0 个客户</div>
+      </div>
+      <div class="flex gap-8">
+        <button class="btn-primary" style="width:auto;padding:9px 14px;font-size:13px;" onclick="showBriefing()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          今日简报
+        </button>
+        <button class="btn-icon" onclick="showPage('page-add')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="btn-icon" onclick="showPage('page-settings')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <div class="search-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <input class="search-input" id="search-input" placeholder="搜索客户姓名或行业…" oninput="renderList()">
+    </div>
+    <div class="filter-tabs" id="filter-tabs">
+      <button class="filter-tab active-all" data-filter="全部" onclick="setFilter(this,'全部')">全部</button>
+      <button class="filter-tab" data-filter="热" onclick="setFilter(this,'热')">热</button>
+      <button class="filter-tab" data-filter="温" onclick="setFilter(this,'温')">温</button>
+      <button class="filter-tab" data-filter="冷" onclick="setFilter(this,'冷')">冷</button>
+    </div>
+  </div>
+  <div id="urgent-banner" style="display:none" class="urgent-banner">
+    <span>⚠️</span>
+    <span id="urgent-text"></span>
+  </div>
+  <div class="scroll-body" id="customer-list"></div>
+</div>
+
+<!-- ═══════════════ PAGE: ADD ═══════════════ -->
+<div class="page" id="page-add">
+  <div class="header">
+    <div class="header-row">
+      <button class="btn-back" onclick="showPage('page-list')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        添加客户
+      </button>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div class="card">
+      <div class="section">
+        <div class="label">客户姓名 *</div>
+        <input class="input" id="add-name" placeholder="例：王建国" maxlength="20">
+      </div>
+      <div class="section">
+        <div class="label">所属行业</div>
+        <input class="input" id="add-industry" placeholder="例：建材、装修、保险、医疗器械…" maxlength="20">
+      </div>
+      <div class="section">
+        <div class="label">手机号</div>
+        <input class="input" id="add-phone" placeholder="选填" type="tel" maxlength="20">
+      </div>
+      <div class="section">
+        <div class="label">意向温度</div>
+        <div class="temp-row">
+          <button class="temp-btn" data-temp="热" onclick="selectTemp(this,'热')">🔥 热</button>
+          <button class="temp-btn active-warm" data-temp="温" onclick="selectTemp(this,'温')">☀️ 温</button>
+          <button class="temp-btn" data-temp="冷" onclick="selectTemp(this,'冷')">❄️ 冷</button>
+        </div>
+      </div>
+      <div class="section">
+        <div class="label">首次备注</div>
+        <textarea class="textarea" id="add-note" placeholder="第一次接触聊了什么，客户的需求和态度…"></textarea>
+      </div>
+    </div>
+    <button class="btn-primary mt-16" onclick="addCustomer()">确认添加</button>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: DETAIL ═══════════════ -->
+<div class="page" id="page-detail">
+  <div class="header">
+    <div class="header-row center gap-12">
+      <button class="btn-back" onclick="showPage('page-list')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="flex-1">
+        <div id="detail-name" class="header-title" style="font-size:17px;"></div>
+        <div id="detail-meta" class="header-sub"></div>
+      </div>
+      <div class="temp-row" style="gap:6px;width:auto;" id="detail-temp-row"></div>
+      <div id="detail-winrate" class="badge badge-winrate" style="display:none;">成单率 0%</div>
+      <button class="btn-icon" style="background:none;color:#cbd5e1;" onclick="deleteCustomer()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <!-- AI button -->
+    <button class="btn-primary" id="ai-btn" onclick="getAiSuggestion()" style="margin-bottom:14px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      AI 分析 · 生成今日建议
+    </button>
+    <div id="ai-result" style="display:none;margin-bottom:14px;" class="ai-box">
+      <div class="ai-box-label">AI 建议</div>
+      <div class="ai-box-text" id="ai-result-text"></div>
+    </div>
+
+    <!-- Add wechat -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="section">
+        <div class="label">导入微信聊天记录</div>
+        <textarea class="textarea" id="wechat-content" placeholder="粘贴微信聊天记录到此，支持转发多条消息"></textarea>
+        <button class="btn-primary mt-12" onclick="addWechatMessage()" style="font-size:13px;padding:11px;">导入聊天记录</button>
+        <div id="wechat-list" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- Add record -->
+    <div class="card" style="margin-bottom:14px;">
+      <div class="section">
+        <div class="label">添加跟进记录</div>
+        <textarea class="textarea" id="detail-note" placeholder="聊了什么？客户态度如何？下次要注意什么…"></textarea>
+        <button class="btn-primary mt-12" onclick="addRecord()" style="font-size:13px;padding:11px;">保存记录</button>
+      </div>
+    </div>
+
+    <!-- Records -->
+    <div class="card">
+      <div class="section">
+        <div class="label" id="records-label">跟进历史</div>
+        <div id="records-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: BRIEFING ═══════════════ -->
+<div class="page briefing-page" id="page-briefing">
+  <div class="briefing-header">
+    <button class="btn-back" style="color:#64748b;" onclick="showPage('page-list')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div>
+      <div class="briefing-title">今日跟进简报</div>
+      <div class="briefing-date" id="briefing-date"></div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;" id="briefing-body">
+    <div class="loading-state">
+      <div class="loading-emoji">🤖</div>
+      <div class="loading-text">AI 分析中…</div>
+    </div>
+  </div>
+  <div style="padding:0 18px 20px;">
+    <button class="btn-ghost" style="border-color:#334155;color:#475569;background:transparent;" onclick="showBriefing()">重新生成</button>
+  </div>
+</div>
+
+<!-- ═══════════════ PAGE: SETTINGS ═══════════════ -->
+<div class="page" id="page-settings">
+  <div class="header">
+    <div class="header-row">
+      <button class="btn-back" onclick="showPage('page-list')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        设置
+      </button>
+    </div>
+  </div>
+  <div class="scroll-body">
+    <div class="card mt-12">
+      <div class="section">
+        <div class="label">数据管理</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">退出登录</div>
+            <div class="settings-sub">切换账号</div>
+          </div>
+          <button onclick="logout()" style="padding:8px 14px;border-radius:8px;border:1.5px solid #fca5a5;background:#fff1f1;color:#ef4444;font-size:13px;font-weight:600;cursor:pointer;">退出</button>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-12">
+      <div class="section">
+        <div class="flex between center">
+          <div>
+            <div class="settings-label">客跟宝</div>
+            <div class="settings-sub">销售跟进提醒 · MVP v1.0</div>
+          </div>
+          <div style="font-size:22px;">🗂️</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const API_BASE = ''; // Empty = same origin (served by Go backend)
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let customers = [];
+let currentFilter = '全部';
+let selectedId = null;
+let addTemp = '温';
+let currentUser = null;
+let apiToken = '';
+
+// ═══════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════
+function getToken() {
+  return localStorage.getItem('kgb-token') || '';
+}
+
+function setToken(t) {
+  localStorage.setItem('kgb-token', t);
+}
+
+async function apiCall(endpoint, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(options.headers || {})
+  };
+
+  const res = await fetch(`${API_BASE}/api/v1${endpoint}`, {
+    ...options,
+    headers
+  });
+
+  const data = await res.json();
+
+  if (res.status === 401) {
+    logout();
+    throw new Error('登录已过期，请重新登录');
+  }
+
+  if (data.code !== 0) {
+    throw new Error(data.message || '请求失败');
+  }
+
+  return data.data;
+}
+
+async function doLogin() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!phone || !password) return toast('请填写手机号和密码');
+
+  try {
+    const data = await apiCall('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ phone, password })
+    });
+
+    setToken(data.token);
+    currentUser = data.user;
+    apiToken = data.token;
+
+    localStorage.setItem('kgb-nickname', data.user.nickname || '');
+
+    toast('登录成功');
+    showPage('page-list');
+    loadCustomers();
+  } catch (e) {
+    toast(e.message || '登录失败');
+  }
+}
+
+// WeChat OAuth login
+async function wechatLogin() {
+  try {
+    const data = await apiCall('/auth/wechat/url', { method: 'GET' });
+    if (data.auth_url) {
+      // Redirect to WeChat OAuth
+      window.location.href = data.auth_url;
+    } else {
+      toast('微信登录暂不可用');
+    }
+  } catch (e) {
+    toast(e.message || '获取微信授权失败');
+  }
+}
+
+// Handle WeChat callback
+function handleWechatCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const wechatToken = params.get('wechat_token');
+  const state = params.get('state');
+
+  if (wechatToken) {
+    setToken(wechatToken);
+    // Clean URL
+    window.history.replaceState({}, document.title, '/');
+    showPage('page-list');
+    loadCustomers();
+    toast('登录成功');
+  }
+}
+
+async function doRegister() {
+  const phone = document.getElementById('reg-phone').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const nickname = document.getElementById('reg-nickname').value.trim();
+
+  if (!phone || !password) return toast('请填写手机号和密码');
+
+  try {
+    const data = await apiCall('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ phone, password, nickname })
+    });
+
+    setToken(data.token);
+    currentUser = data.user;
+    apiToken = data.token;
+
+    localStorage.setItem('kgb-nickname', data.user.nickname || '');
+
+    toast('注册成功');
+    showPage('page-list');
+    loadCustomers();
+  } catch (e) {
+    toast(e.message || '注册失败');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('kgb-token');
+  localStorage.removeItem('kgb-nickname');
+  currentUser = null;
+  apiToken = '';
+  customers = [];
+  showPage('page-login');
+  toast('已退出登录');
+}
+
+function checkAuth() {
+  const token = getToken();
+  if (token) {
+    showPage('page-list');
+    loadCustomers();
+  } else {
+    showPage('page-login');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CUSTOMERS
+// ═══════════════════════════════════════════════
+async function loadCustomers() {
+  try {
+    customers = await apiCall('/customers');
+    renderList();
+  } catch (e) {
+    toast(e.message || '加载客户失败');
+  }
+}
+
+async function addCustomer() {
+  const name = document.getElementById('add-name').value.trim();
+  if (!name) return toast('请输入客户姓名');
+
+  const industry = document.getElementById('add-industry').value.trim();
+  const phone = document.getElementById('add-phone').value.trim();
+  const note = document.getElementById('add-note').value.trim();
+
+  try {
+    const customer = await apiCall('/customers', {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        industry: industry || '未分类',
+        phone: phone || '',
+        temp: addTemp
+      })
+    });
+
+    // Add initial record if note provided
+    if (note) {
+      await apiCall(`/customers/${getId(customer)}/records`, {
+        method: 'POST',
+        body: JSON.stringify({ note })
+      });
+    }
+
+    toast(`${name} 已添加`);
+    showPage('page-list');
+    loadCustomers();
+  } catch (e) {
+    toast(e.message || '添加失败');
+  }
+}
+
+async function updateCustomer(id, data) {
+  try {
+    await apiCall(`/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    loadCustomers();
+  } catch (e) {
+    toast(e.message || '更新失败');
+  }
+}
+
+async function deleteCustomer() {
+  if (!confirm(`确定要删除「${getCustomer(selectedId).name}」的所有记录吗？`)) return;
+
+  try {
+    await apiCall(`/customers/${selectedId}`, {
+      method: 'DELETE'
+    });
+    toast('已删除');
+    showPage('page-list');
+    loadCustomers();
+  } catch (e) {
+    toast(e.message || '删除失败');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// RECORDS
+// ═══════════════════════════════════════════════
+let currentRecords = [];
+let currentWechatMessages = [];
+
+async function addWechatMessage() {
+  const content = document.getElementById('wechat-content').value.trim();
+  if (!content) return toast('请粘贴微信聊天记录');
+
+  try {
+    await apiCall(`/customers/${selectedId}/wechat`, {
+      method: 'POST',
+      body: JSON.stringify({ content })
+    });
+
+    document.getElementById('wechat-content').value = '';
+    loadWechatMessages();
+    toast('聊天记录已导入');
+  } catch (e) {
+    toast(e.message || '导入失败');
+  }
+}
+
+async function loadWechatMessages() {
+  try {
+    currentWechatMessages = await apiCall(`/customers/${selectedId}/wechat`);
+    renderWechatMessages();
+  } catch (e) {
+    console.error('Failed to load wechat messages:', e);
+  }
+}
+
+function renderWechatMessages() {
+  const el = document.getElementById('wechat-list');
+  if (currentWechatMessages.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+  el.innerHTML = currentWechatMessages.slice(0, 3).map(m => `
+    <div style="font-size:12px;color:var(--muted);padding:6px 0;border-bottom:1px solid var(--border);">
+      ${m.content.substring(0, 50)}${m.content.length > 50 ? '...' : ''}
+    </div>
+  `).join('');
+}
+
+async function addRecord() {
+  const note = document.getElementById('detail-note').value.trim();
+  if (!note) return toast('请输入跟进内容');
+
+  try {
+    await apiCall(`/customers/${selectedId}/records`, {
+      method: 'POST',
+      body: JSON.stringify({ note })
+    });
+
+    document.getElementById('detail-note').value = '';
+    loadDetailRecords();
+    loadCustomers(); // Refresh list
+    toast('记录已保存');
+  } catch (e) {
+    toast(e.message || '保存失败');
+  }
+}
+
+async function loadDetailRecords() {
+  try {
+    currentRecords = await apiCall(`/customers/${selectedId}/records`);
+    renderRecords();
+  } catch (e) {
+    console.error('Failed to load records:', e);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// AI
+// ═══════════════════════════════════════════════
+async function getAiSuggestion() {
+  const c = getCustomer(selectedId);
+  const btn = document.getElementById('ai-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> AI 分析中…`;
+  document.getElementById('ai-result').style.display = 'none';
+
+  try {
+    const data = await apiCall(`/ai/suggest/${selectedId}`, {
+      method: 'POST'
+    });
+
+    if (data.analysis && data.opener) {
+      document.getElementById('ai-result-text').textContent = `【意向分析】${data.analysis}\n\n【开场白建议】${data.opener}`;
+    } else if (data.raw) {
+      document.getElementById('ai-result-text').textContent = data.raw;
+    } else {
+      document.getElementById('ai-result-text').textContent = JSON.stringify(data, null, 2);
+    }
+    document.getElementById('ai-result').style.display = 'block';
+  } catch (e) {
+    toast('AI 请求失败：' + (e.message || '请稍后重试'));
+  }
+  btn.disabled = false;
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> AI 分析 · 生成今日建议`;
+}
+
+async function showBriefing() {
+  document.getElementById('briefing-date').textContent = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+  showPage('page-briefing');
+
+  if (customers.length === 0) {
+    document.getElementById('briefing-body').innerHTML = `<div class="loading-state"><div class="loading-emoji">📋</div><div class="loading-text">还没有客户数据</div></div>`;
+    return;
+  }
+
+  document.getElementById('briefing-body').innerHTML = `
+    <div class="loading-state">
+      <div class="loading-emoji">🤖</div>
+      <div class="loading-text">AI 正在分析你的 ${customers.length} 个客户…<br><span style="font-size:12px;color:#334155">综合意向、最近联系时间、备注内容</span></div>
+    </div>`;
+
+  try {
+    const data = await apiCall('/ai/briefing', { method: 'POST' });
+    if (data.top_customers && data.top_customers.length > 0) {
+      renderBriefingByTemp(data.top_customers);
+    } else {
+      document.getElementById('briefing-body').innerHTML = `<div class="loading-state"><div class="loading-emoji">😔</div><div class="loading-text">暂无推荐客户</div></div>`;
+    }
+  } catch (e) {
+    document.getElementById('briefing-body').innerHTML = `<div class="loading-state"><div class="loading-emoji">😵</div><div class="loading-text">AI 请求失败：${e.message || '请稍后重试'}</div></div>`;
+  }
+}
+
+function renderBriefingByTemp(items) {
+  const html = items.map((item, i) => `
+    <div class="brief-card${i === 0 ? ' top' : ''}">
+      ${i === 0 ? '<div class="brief-tag">首要</div>' : ''}
+      <div class="flex center gap-12">
+        <div class="brief-avatar">${item.name[0]}</div>
+        <div class="flex-1">
+          <div class="brief-name">${item.name}</div>
+          <div class="brief-reason">${item.reason}</div>
+        </div>
+      </div>
+      <div class="brief-opener">
+        <div class="brief-opener-label">建议开场白</div>
+        <div class="brief-opener-text">"${item.opener}"</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('briefing-body').innerHTML = html;
+}
+
+function renderBriefing(items) {
+  const html = items.map((item, i) => `
+    <div class="brief-card${i === 0 ? ' top' : ''}">
+      ${i === 0 ? '<div class="brief-tag">首要</div>' : ''}
+      <div class="flex center gap-12">
+        <div class="brief-avatar">${item.name[0]}</div>
+        <div class="flex-1">
+          <div class="brief-name">${item.name}</div>
+          <div class="brief-reason">${item.reason}</div>
+        </div>
+      </div>
+      <div class="brief-opener">
+        <div class="brief-opener-label">建议开场白</div>
+        <div class="brief-opener-text">"${item.opener}"</div>
+      </div>
+    </div>`).join('');
+  document.getElementById('briefing-body').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function daysAgo(dateStr) {
+  if (!dateStr) return 999;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return 999;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+function daysLabel(n) {
+  if (n === 0) return '今天';
+  if (n === 1) return '昨天';
+  return `${n}天前`;
+}
+
+function tempClass(t) {
+  return t === '热' ? 'badge-hot' : t === '温' ? 'badge-warm' : 'badge-cold';
+}
+
+function tempColor(t) {
+  return t === '热' ? 'var(--hot)' : t === '温' ? 'var(--warm)' : 'var(--cold)';
+}
+
+function tempBg(t) {
+  return t === '热' ? 'var(--hot-bg)' : t === '温' ? 'var(--warm-bg)' : 'var(--cold-bg)';
+}
+
+// Helper to get ID from either lowercase or uppercase
+function getId(obj) { return obj.id || obj.ID; }
+
+function getCustomer(id) { return customers.find(c => getId(c) === id); }
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ═══════════════════════════════════════════════
+// PAGES
+// ═══════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'page-list') renderList();
+  if (id === 'page-add') resetAddForm();
+}
+
+// ═══════════════════════════════════════════════
+// LIST
+// ═══════════════════════════════════════════════
+function setFilter(el, f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-tab').forEach(b => {
+    b.className = 'filter-tab';
+    if (b.dataset.filter === f) b.classList.add(f === '全部' ? 'active-all' : `active-${f}`);
+  });
+  renderList();
+}
+
+function renderList() {
+  const search = document.getElementById('search-input').value.trim();
+  const urgentCount = customers.filter(c => daysAgo(c.last_contact) >= 7).length;
+
+  // subtitle
+  document.getElementById('list-subtitle').textContent = `${customers.length} 个客户${urgentCount ? ` · ${urgentCount} 个需要跟进` : ''}`;
+
+  // urgent banner
+  const banner = document.getElementById('urgent-banner');
+  if (urgentCount > 0) {
+    banner.style.display = 'flex';
+    document.getElementById('urgent-text').innerHTML = `<strong style="color:#92400e">${urgentCount} 个客户超过 7 天未联系</strong> <span style="color:#b45309;font-size:12px;">当心丢单</span>`;
+  } else { banner.style.display = 'none'; }
+
+  // filter & search
+  let list = customers
+    .filter(c => currentFilter === '全部' || c.temp === currentFilter)
+    .filter(c => !search || c.name.includes(search) || (c.industry && c.industry.includes(search)))
+    .sort((a, b) => daysAgo(a.last_contact) - daysAgo(b.last_contact));
+
+  const el = document.getElementById('customer-list');
+  if (list.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">${search ? '🔍' : '📋'}</div>${search ? '没有找到匹配的客户' : '还没有客户，点右上角 + 添加'}</div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(c => {
+    const days = daysAgo(c.last_contact);
+    const urgent = days >= 7;
+    const lastNote = c.notes || '';
+    const cid = getId(c);
+    return `
+      <div class="customer-card${urgent ? ' urgent' : ''}" onclick="openDetail(${cid})" style="margin-bottom:10px;">
+        ${urgent ? '<div class="urgent-bar"></div>' : ''}
+        <div class="card-row">
+          <div class="avatar" style="background:${tempBg(c.temp)};color:${tempColor(c.temp)};">${c.name[0]}</div>
+          <div class="card-info">
+            <div class="card-name">${c.name}</div>
+            <div class="card-industry">${c.industry || '未分类'}</div>
+          </div>
+          <div class="card-meta">
+            <span class="badge ${tempClass(c.temp)}">${c.temp}</span>
+            ${c.win_rate > 0 ? `<span class="badge badge-winrate" style="margin-left:4px;">${c.win_rate}%</span>` : ''}
+            <div class="days-chip" style="color:${urgent ? 'var(--warm)' : 'var(--muted)'}">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              ${daysLabel(days)}
+            </div>
+          </div>
+        </div>
+        ${lastNote ? `<div class="card-note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>${lastNote.slice(0,50)}${lastNote.length > 50 ? '…' : ''}</span></div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// DETAIL
+// ═══════════════════════════════════════════════
+function openDetail(id) {
+  selectedId = id;
+  const c = getCustomer(id);
+  document.getElementById('detail-name').textContent = c.name;
+  document.getElementById('detail-meta').textContent = `${c.industry || '未分类'} · ${c.phone || '—'}`;
+  renderDetailTemp(c.temp);
+  renderWinRate(c.win_rate || 0);
+  loadDetailRecords();
+  loadWechatMessages();
+  document.getElementById('ai-result').style.display = 'none';
+  document.getElementById('detail-note').value = '';
+  showPage('page-detail');
+}
+
+function renderWinRate(rate) {
+  const el = document.getElementById('detail-winrate');
+  if (rate > 0) {
+    el.style.display = 'inline-flex';
+    el.textContent = `成单率 ${rate}%`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function renderDetailTemp(current) {
+  const row = document.getElementById('detail-temp-row');
+  row.innerHTML = ['热','温','冷'].map(t => `
+    <button class="temp-btn${current === t ? ` active-${t==='热'?'hot':t==='温'?'warm':'cold'}` : ''}"
+      style="padding:6px 10px;font-size:12px;flex:none;"
+      onclick="changeTemp('${t}')">${t}</button>`).join('');
+}
+
+function changeTemp(t) {
+  updateCustomer(selectedId, { temp: t });
+  renderDetailTemp(t);
+  toast('意向温度已更新');
+}
+
+function renderRecords() {
+  const el = document.getElementById('records-list');
+  document.getElementById('records-label').textContent = `跟进历史（${currentRecords.length}）`;
+  if (currentRecords.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">暂无记录，开始添加吧</div>';
+    return;
+  }
+  el.innerHTML = [...currentRecords].reverse().map(r => {
+    const d = new Date(r.contacted_at);
+    const dateStr = !isNaN(d.getTime()) ? d.toLocaleDateString('zh-CN') : r.contacted_at;
+    return `
+    <div class="record-item">
+      <div class="record-date">${dateStr}</div>
+      <div class="record-note">${r.note}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// ADD
+// ═══════════════════════════════════════════════
+function resetAddForm() {
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-industry').value = '';
+  document.getElementById('add-phone').value = '';
+  document.getElementById('add-note').value = '';
+  addTemp = '温';
+  document.querySelectorAll('#page-add .temp-btn').forEach(b => {
+    b.className = 'temp-btn';
+    if (b.dataset.temp === '温') b.classList.add('active-warm');
+  });
+}
+
+function selectTemp(el, t) {
+  addTemp = t;
+  document.querySelectorAll('#page-add .temp-btn').forEach(b => {
+    b.className = 'temp-btn';
+  });
+  el.classList.add(t === '热' ? 'active-hot' : t === '温' ? 'active-warm' : 'active-cold');
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+// Start app
+checkAuth();
+</script>
+</body>
+</html>
