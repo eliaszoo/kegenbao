@@ -77,34 +77,63 @@ func (h *WechatHandler) Callback(c *gin.Context) {
 
 	openID := tokenData["openid"].(string)
 
-	// Find or create user
+	// Check if openid is empty (微信未正确返回)
+	if openID == "" {
+		c.JSON(http.StatusBadRequest, models.ErrorResponse(400, "微信授权失败，无法获取用户信息"))
+		return
+	}
+
+	// Find or create user by wechat_openid
 	var user models.User
 	result := database.GetDB().Where("wechat_openid = ?", openID).First(&user)
 
 	if result.Error != nil {
-		// Create new user
-		nickname := userInfo["nickname"].(string)
-		if nickname == "" {
-			nickname = "微信用户"
+		// Try to find existing user by phone if provided
+		phone := ""
+		if p, ok := tokenData["phone"].(string); ok {
+			phone = p
 		}
 
-		// Handle nickname encoding issues
-		nickname = filterEmoji(nickname)
-
-		user = models.User{
-			WechatOpenID: openID,
-			Nickname:     nickname,
-			Avatar:       userInfo["headimgurl"].(string),
-			Phone:        "",
-			PasswordHash: "",
+		if phone != "" {
+			database.GetDB().Where("phone = ?", phone).First(&user)
 		}
 
-		if err := database.GetDB().Create(&user).Error; err != nil {
-			log.Printf("Failed to create WeChat user: %v", err)
-			c.JSON(http.StatusInternalServerError, models.ErrorResponse(500, "创建用户失败"))
-			return
+		if user.ID != 0 {
+			// Update existing user with wechat openid
+			user.WechatOpenID = openID
+			if user.Nickname == "" || user.Nickname == "微信用户" {
+				user.Nickname = filterEmoji(userInfo["nickname"].(string))
+			}
+			if user.Avatar == "" {
+				user.Avatar = userInfo["headimgurl"].(string)
+			}
+			database.GetDB().Save(&user)
+			log.Printf("Linked existing user %d to WeChat", user.ID)
+		} else {
+			// Create new user
+			nickname := userInfo["nickname"].(string)
+			if nickname == "" {
+				nickname = "微信用户"
+			}
+
+			// Handle nickname encoding issues
+			nickname = filterEmoji(nickname)
+
+			user = models.User{
+				WechatOpenID: openID,
+				Nickname:     nickname,
+				Avatar:       userInfo["headimgurl"].(string),
+				Phone:        "",
+				PasswordHash: "",
+			}
+
+			if err := database.GetDB().Create(&user).Error; err != nil {
+				log.Printf("Failed to create WeChat user: %v", err)
+				c.JSON(http.StatusInternalServerError, models.ErrorResponse(500, "创建用户失败"))
+				return
+			}
+			log.Printf("Created new WeChat user: %s", nickname)
 		}
-		log.Printf("Created new WeChat user: %s", nickname)
 	} else {
 		// Update user info if changed
 		updates := map[string]interface{}{
