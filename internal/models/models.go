@@ -14,7 +14,7 @@ type User struct {
 	Phone        string         `gorm:"uniqueIndex" json:"phone"`         // 手机号，可为空（微信登录时）
 	PasswordHash string         `gorm:"not null" json:"-"`                // 密码hash，微信登录时为空
 	Nickname     string         `json:"nickname"`
-	WechatOpenID string         `gorm:"uniqueIndex" json:"wechat_openid"`  // 微信openid
+	WechatOpenID string         `gorm:"index" json:"wechat_openid"`  // 微信openid，可为空
 	Avatar       string         `json:"avatar"`                          // 头像
 }
 

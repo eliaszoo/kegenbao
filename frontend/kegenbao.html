@@ -281,7 +281,7 @@
     <button class="btn-primary" onclick="doLogin()">登录</button>
 
     <div style="margin-top:20px;text-align:center;">
-      <button class="btn-wechat" onclick="wechatLogin()" style="background:#07c160;color:#fff;border:none;padding:12px;border-radius:12px;font-size:14px;font-weight:700;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <button class="btn-wechat" onclick="wechatLogin()" style="background:#e2e8f0;color:#94a3b8;border:none;padding:12px;border-radius:12px;font-size:14px;font-weight:700;width:100%;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178A1.17 1.17 0 0 1 4.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 0 1-1.162 1.178 1.17 1.17 0 0 1-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 0 1 .598.082l1.584.926a.272.272 0 0 0 .14.046c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 0 1-.023-.156.49.49 0 0 1 .201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-6.656-6.088V8.89c-.135-.01-.269-.03-.406-.03zm-2.53 3.274c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.97-.982zm4.844 0c.535 0 .969.44.969.982a.976.976 0 0 1-.969.983.976.976 0 0 1-.969-.983c0-.542.434-.982.969-.982z"/></svg>
         微信一键登录
       </button>
@@ -431,10 +431,7 @@
     <!-- Add wechat -->
     <div class="card" style="margin-bottom:14px;">
       <div class="section">
-        <div class="label">导入微信聊天记录</div>
-        <textarea class="textarea" id="wechat-content" placeholder="粘贴微信聊天记录到此，支持转发多条消息"></textarea>
-        <button class="btn-primary mt-12" onclick="addWechatMessage()" style="font-size:13px;padding:11px;">导入聊天记录</button>
-        <div id="wechat-list" style="margin-top:12px;"></div>
+        <button class="btn-ghost" onclick="addWechatMessage()" style="background:#f1f5f9;color:#94a3b8;border-color:#e2e8f0;cursor:not-allowed;">导入微信聊天记录</button>
       </div>
     </div>
 
@@ -600,18 +597,8 @@ async function doLogin() {
 }
 
 // WeChat OAuth login
-async function wechatLogin() {
-  try {
-    const data = await apiCall('/auth/wechat/url', { method: 'GET' });
-    if (data.auth_url) {
-      // Redirect to WeChat OAuth
-      window.location.href = data.auth_url;
-    } else {
-      toast('微信登录暂不可用');
-    }
-  } catch (e) {
-    toast(e.message || '获取微信授权失败');
-  }
+function wechatLogin() {
+  toast('微信登录开发中，敬请期待');
 }
 
 // Handle WeChat callback
@@ -757,22 +744,8 @@ async function deleteCustomer() {
 let currentRecords = [];
 let currentWechatMessages = [];
 
-async function addWechatMessage() {
-  const content = document.getElementById('wechat-content').value.trim();
-  if (!content) return toast('请粘贴微信聊天记录');
-
-  try {
-    await apiCall(`/customers/${selectedId}/wechat`, {
-      method: 'POST',
-      body: JSON.stringify({ content })
-    });
-
-    document.getElementById('wechat-content').value = '';
-    loadWechatMessages();
-    toast('聊天记录已导入');
-  } catch (e) {
-    toast(e.message || '导入失败');
-  }
+function addWechatMessage() {
+  toast('微信聊天记录导入开发中，敬请期待');
 }
 
 async function loadWechatMessages() {
@@ -1025,7 +998,7 @@ function renderList() {
           </div>
           <div class="card-meta">
             <span class="badge ${tempClass(c.temp)}">${c.temp}</span>
-            ${c.win_rate > 0 ? `<span class="badge badge-winrate" style="margin-left:4px;">${c.win_rate}%</span>` : ''}
+            ${c.win_rate > 0 ? `<span class="badge badge-winrate" style="margin-left:4px;">成单率 ${c.win_rate}%</span>` : ''}
             <div class="days-chip" style="color:${urgent ? 'var(--warm)' : 'var(--muted)'}">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               ${daysLabel(days)}
